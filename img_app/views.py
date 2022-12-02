@@ -2,20 +2,44 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import cv2
 
+import base64
+from PIL import Image
+import cv2
+from io import StringIO
+import numpy as np
+
+
+def readb64(base64_string):
+    sbuf = StringIO()
+    sbuf.write(base64.b64decode(base64_string))
+    pimg = Image.open(sbuf)
+    return cv2.cvtColor(np.array(pimg), cv2.COLOR_RGB2BGR)
+
+
 @api_view(['GET', 'POST'])
 def home(request):
-    f = request.FILES
-    print(f)
-    img = f['img'].read()
-    with open('img.png', 'wb') as f:
-        f.write(img)
-        f.close()
-    
-    img = cv2.imread('img.png')
+    gray_img = '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'
+    # f = request.FILES
+    # img = f['img'].read()
+
+    # this img to base64
+    # with open("img.png", "rb") as img_file:
+    #     img = img_file.read()
+    #     print(img)
+    # print(my_string)
+
+    img = base64.b64decode(gray_img)
+    arr = np.frombuffer(img, np.uint8)
+
+    # img = readb64(gray_img)
+    # img = cv2.imread(gray_img)
+    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    cv2.imwrite('gray.png', gray)
-    with open('gray.png', 'rb') as f:
-        content = f.read()
-    print(content)
-    return Response({"status":str(content)})
+    my_string = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+    my_string = base64.b64encode(my_string)
+    my = cv2.imencode(my_string, cv2.IMREAD_UNCHANGED)
+    print(my)
+    cv2.imshow('image', my_string)
+
+    return Response({"status": str(my_string)})
